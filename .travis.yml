@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t kuperlen/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run kuperlen/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t kuperlen/multi-client ./client
+  - docker build -t kuperlen/multi-nginx ./nginx
+  - docker build -t kuperlen/multi-server ./server
+  - docker build -t kuperlen/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push kuperlen/multi-client
+  - docker push kuperlen/multi-nginx
+  - docker push kuperlen/multi-server
+  - docker push kuperlen/multi-worker
